@@ -13,6 +13,7 @@ const settingsModal = document.getElementById('settingsModal');
 const closeModal = document.getElementById('closeModal');
 const ghTokenInput = document.getElementById('ghToken');
 const ghRepoInput = document.getElementById('ghRepo');
+const hfTokenInput = document.getElementById('hfToken');
 const saveSettingsBtn = document.getElementById('saveSettings');
 const setupBanner = document.getElementById('setupBanner');
 const setupBtn = document.getElementById('setupBtn');
@@ -85,13 +86,14 @@ function loadSettings() {
 function saveSettings_() {
     const token = ghTokenInput.value.trim();
     const repo = ghRepoInput.value.trim();
+    const hfToken = hfTokenInput.value.trim();
 
     if (!token || !repo) {
         showToast('Token ve repo adı gerekli');
         return;
     }
 
-    settings = { token, repo };
+    settings = { token, repo, hfToken };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     settingsModal.classList.remove('active');
     updateUI();
@@ -104,6 +106,7 @@ function saveSettings_() {
 function openSettings() {
     ghTokenInput.value = settings.token || '';
     ghRepoInput.value = settings.repo || 'mp3-storage';
+    hfTokenInput.value = settings.hfToken || '';
     settingsModal.classList.add('active');
 }
 
@@ -297,7 +300,8 @@ async function generateTTS() {
 
         let client;
         try {
-            client = await Client.connect("ResembleAI/Chatterbox-Multilingual-TTS");
+            const connectOptions = settings.hfToken ? { hf_token: settings.hfToken } : {};
+            client = await Client.connect("ResembleAI/Chatterbox-Multilingual-TTS", connectOptions);
         } catch (err) {
             throw new Error("API'ye bağlanılamadı. HuggingFace kapalı olabilir.");
         }
