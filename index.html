@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP3 Host — Yükle & Paylaş</title>
+    <meta name="description" content="MP3 dosyalarını yükle, kalıcı URL oluştur, her yerde kullan.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-brand">
+                <div class="logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 18V5l12-2v13"/>
+                        <circle cx="6" cy="18" r="3"/>
+                        <circle cx="18" cy="16" r="3"/>
+                    </svg>
+                </div>
+                <h1>MP3 Host</h1>
+            </div>
+            <button class="btn-settings" id="settingsBtn" title="Ayarlar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Settings Modal -->
+        <div class="modal-overlay" id="settingsModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>GitHub Ayarları</h2>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="ghToken">Personal Access Token</label>
+                        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
+                        <small>GitHub → Settings → Developer settings → Personal access tokens → <strong>repo</strong> yetkisi yeterli</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="ghRepo">Repository Adı</label>
+                        <input type="text" id="ghRepo" placeholder="mp3-storage" autocomplete="off">
+                        <small>Dosyaların yükleneceği repo (yoksa otomatik oluşturulur)</small>
+                    </div>
+                    <button class="btn-primary" id="saveSettings">Kaydet</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup Banner (shown when not configured) -->
+        <div class="setup-banner" id="setupBanner">
+            <div class="setup-icon">⚙️</div>
+            <p>GitHub ayarlarını yapılandır</p>
+            <button class="btn-outline" id="setupBtn">Ayarları Aç</button>
+        </div>
+
+        <!-- Upload Area -->
+        <main class="main" id="mainContent">
+            <!-- Drop Zone -->
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-content">
+                    <div class="drop-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <p class="drop-text">MP3 dosyasını sürükle & bırak</p>
+                    <p class="drop-subtext">veya tıklayarak seç</p>
+                    <input type="file" id="fileInput" accept=".mp3,audio/mpeg" hidden>
+                </div>
+            </div>
+
+            <!-- Upload Progress -->
+            <div class="upload-card hidden" id="uploadCard">
+                <div class="upload-info">
+                    <div class="upload-icon">🎵</div>
+                    <div class="upload-details">
+                        <p class="upload-name" id="uploadName">dosya.mp3</p>
+                        <p class="upload-size" id="uploadSize">0 MB</p>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p class="upload-status" id="uploadStatus">Yükleniyor...</p>
+            </div>
+
+            <!-- Result -->
+            <div class="result-card hidden" id="resultCard">
+                <div class="result-header">
+                    <span class="result-badge">✓ Yüklendi</span>
+                </div>
+                <div class="result-url-box">
+                    <input type="text" class="result-url" id="resultUrl" readonly>
+                    <button class="btn-copy" id="copyBtn" title="Kopyala">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="result-actions">
+                    <button class="btn-outline btn-sm" id="openUrlBtn">Tarayıcıda Aç</button>
+                    <button class="btn-outline btn-sm" id="uploadAnotherBtn">Başka Yükle</button>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="history-section" id="historySection">
+                <h3 class="history-title">Yükleme Geçmişi</h3>
+                <div class="history-list" id="historyList">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
