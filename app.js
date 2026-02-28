@@ -293,7 +293,7 @@ async function generateTTS() {
     ttsProgressFill.style.width = '30%';
 
     try {
-        const { Client } = window.gradio_client;
+        const { Client } = await import('https://cdn.jsdelivr.net/npm/@gradio/client/+esm');
 
         let client;
         try {
