@@ -366,10 +366,15 @@ async function generateTTS() {
 
 function handleCustomTtsFile(file) {
     if (!file) return;
-    if (!file.type.startsWith('audio/')) {
-        showToast('Sadece ses dosyaları (MP3, WAV) kabul edilir');
+
+    const validAudio = file.type.startsWith('audio/');
+    const validVideo = file.type === 'video/mp4' || file.type === 'video/quicktime' || file.name.toLowerCase().endsWith('.mov') || file.name.toLowerCase().endsWith('.mp4');
+
+    if (!validAudio && !validVideo) {
+        showToast('Sadece ses (MP3, WAV) veya video (MP4, MOV) dosyaları kabul edilir');
         return;
     }
+
     customTtsFile = file;
     ttsFileName.textContent = file.name;
     ttsFileName.classList.remove('hidden');
