@@ -32,6 +32,30 @@ const uploadAnotherBtn = document.getElementById('uploadAnotherBtn');
 const historySection = document.getElementById('historySection');
 const historyList = document.getElementById('historyList');
 
+// ===== TTS DOM Elements =====
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+const ttsText = document.getElementById('ttsText');
+const radioDefault = document.querySelector('input[name="refType"][value="default"]');
+const radioCustom = document.querySelector('input[name="refType"][value="custom"]');
+const customRefArea = document.getElementById('customRefArea');
+const ttsDropZone = document.getElementById('ttsDropZone');
+const ttsFileInput = document.getElementById('ttsFileInput');
+const ttsFileName = document.getElementById('ttsFileName');
+const generateTtsBtn = document.getElementById('generateTtsBtn');
+const ttsResultArea = document.getElementById('ttsResultArea');
+const ttsAudio = document.getElementById('ttsAudio');
+const downloadTtsBtn = document.getElementById('downloadTtsBtn');
+const saveTtsAsMp3Btn = document.getElementById('saveTtsAsMp3Btn');
+const ttsProgressCard = document.getElementById('ttsProgressCard');
+const ttsProgressFill = document.getElementById('ttsProgressFill');
+const ttsStatus = document.getElementById('ttsStatus');
+
+// ===== State (TTS) =====
+let customTtsFile = null;
+let currentTtsBlob = null;
+const DEFAULT_REF_URL = 'https://raw.githubusercontent.com/ozguradmin/mp3-storage/main/uploads/1772289155579_en-US-Chirp3-HD-Umbriel.mp3';
+
 // ===== Init =====
 function init() {
     updateUI();
@@ -232,6 +256,125 @@ async function handleFile(file) {
     }
 }
 
+// ===== TTS Flow =====
+async function generateTTS() {
+    const text = ttsText.value.trim();
+    if (!text) {
+        showToast('Lütfen sese çevrilecek bir metin yazın');
+        return;
+    }
+
+    // Determine reference audio
+    const isCustom = radioCustom.checked;
+    let audioPromptParams;
+
+    if (isCustom) {
+        if (!customTtsFile) {
+            showToast('Lütfen referans bir ses dosyası seçin');
+            return;
+        }
+        audioPromptParams = customTtsFile;
+    } else {
+        // Use default URL but we need it as a Blob to pass to Gradio handles
+        try {
+            audioPromptParams = DEFAULT_REF_URL;
+        } catch (e) {
+            showToast('Varsayılan ses yüklenemedi');
+            return;
+        }
+    }
+
+    // Show Progress
+    generateTtsBtn.disabled = true;
+    ttsResultArea.classList.add('hidden');
+    ttsProgressCard.classList.remove('hidden');
+    ttsStatus.textContent = "HuggingFace API'sine bağlanılıyor...";
+    ttsStatus.classList.remove('error');
+    ttsProgressFill.style.width = '30%';
+
+    try {
+        const { Client } = window.gradio_client;
+
+        let client;
+        try {
+            client = await Client.connect("ResembleAI/Chatterbox-Multilingual-TTS");
+        } catch (err) {
+            throw new Error("API'ye bağlanılamadı. HuggingFace kapalı olabilir.");
+        }
+
+        ttsStatus.textContent = "Ses üretiliyor...";
+        ttsProgressFill.style.width = '70%';
+
+        // Gradio requires files to be passed directly or as Blobs/URLs
+        // Fortunately, the handle_file from Gradio client supports File objects directly
+        const audioPromptInput = isCustom ? customTtsFile : await (await fetch(DEFAULT_REF_URL)).blob();
+
+        const result = await client.predict("/generate_tts_audio", {
+            text_input: text,
+            language_id: "tr",
+            audio_prompt_path_input: audioPromptInput,
+            exaggeration_input: 0.5,
+            temperature_input: 0.8,
+            seed_num_input: 0,
+            cfgw_input: 0.5
+        });
+
+        // result is normally {"url": "blob:..."} or {"data": "..."} depending on the API output
+        ttsProgressFill.style.width = '100%';
+        ttsStatus.textContent = "Tamamlandı!";
+
+        // Get the audio from the predictive result array or object
+        // For audio output, Gradio usually returns {"url": "...", ...} or just an object with 'url'
+        let audioUrl = result.url || (result.data ? result.data[0].url : null);
+
+        // If it's a direct response string (blob url)
+        if (typeof result === 'string') {
+            audioUrl = result;
+        } else if (result.value) { // some gradio client versions
+            audioUrl = result.value.url;
+        } else if (Array.isArray(result) && result[0]) {
+            audioUrl = typeof result[0] === 'object' ? result[0].url : result[0];
+        }
+
+        if (!audioUrl) {
+            console.log("Raw Result:", result);
+            throw new Error("Beklenmeyen API yanıtı");
+        }
+
+        // Fetch the generated blob
+        const res = await fetch(audioUrl);
+        currentTtsBlob = await res.blob();
+
+        const localUrl = URL.createObjectURL(currentTtsBlob);
+
+        ttsAudio.src = localUrl;
+
+        setTimeout(() => {
+            ttsProgressCard.classList.add('hidden');
+            ttsResultArea.classList.remove('hidden');
+            generateTtsBtn.disabled = false;
+        }, 500);
+
+    } catch (err) {
+        ttsProgressFill.style.width = '0%';
+        ttsStatus.textContent = 'Hata: ' + err.message;
+        ttsStatus.classList.add('error');
+        generateTtsBtn.disabled = false;
+        console.error(err);
+    }
+}
+
+function handleCustomTtsFile(file) {
+    if (!file) return;
+    if (!file.type.startsWith('audio/')) {
+        showToast('Sadece ses dosyaları (MP3, WAV) kabul edilir');
+        return;
+    }
+    customTtsFile = file;
+    ttsFileName.textContent = file.name;
+    ttsFileName.classList.remove('hidden');
+}
+
 // ===== History =====
 function loadHistory() {
     try {
@@ -394,6 +537,76 @@ function bindEvents() {
     uploadAnotherBtn.addEventListener('click', () => {
         resultCard.classList.add('hidden');
         uploadCard.classList.add('hidden');
+    });
+
+    // ===== TTS Events =====
+
+    // Tabs Navigation
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+    });
+
+    // Ref Source Toggle
+    document.querySelectorAll('input[name="refType"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                customRefArea.classList.remove('hidden');
+            } else {
+                customRefArea.classList.add('hidden');
+            }
+        });
+    });
+
+    // Custom TTS Audio File Drop
+    ttsDropZone.addEventListener('click', () => ttsFileInput.click());
+
+    ttsDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        ttsDropZone.classList.add('dragover');
+    });
+
+    ttsDropZone.addEventListener('dragleave', () => ttsDropZone.classList.remove('dragover'));
+
+    ttsDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        ttsDropZone.classList.remove('dragover');
+        handleCustomTtsFile(e.dataTransfer.files[0]);
+    });
+
+    ttsFileInput.addEventListener('change', (e) => {
+        handleCustomTtsFile(e.target.files[0]);
+    });
+
+    // Generate Button
+    generateTtsBtn.addEventListener('click', generateTTS);
+
+    // Download TTS Audio
+    downloadTtsBtn.addEventListener('click', () => {
+        if (!currentTtsBlob) return;
+        const url = URL.createObjectURL(currentTtsBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TTS_${new Date().getTime()}.wav`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    // Save generated TTS to MP3 Storage
+    saveTtsAsMp3Btn.addEventListener('click', () => {
+        if (!currentTtsBlob) return;
+
+        // Go back to upload tab
+        tabBtns[0].click();
+
+        // Fake a File object and send to the main upload flow
+        const f = new File([currentTtsBlob], `TTS_${new Date().getTime()}.wav`, { type: 'audio/wav' });
+        handleFile(f);
     });
 }
 

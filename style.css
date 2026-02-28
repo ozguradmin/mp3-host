@@ -1,5 +1,7 @@
 /* ===== Reset & Base ===== */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -590,10 +592,174 @@ body {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* ===== Tabs ===== */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding: 6px;
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-card-hover);
+}
+
+.tab-btn.active {
+    background: var(--bg-secondary);
+    color: var(--accent-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tab-content {
+    display: none;
+    animation: slideIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ===== TTS Playground ===== */
+.tts-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.tts-container .form-group label {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.tts-container textarea {
+    width: 100%;
+    padding: 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    transition: all var(--transition);
+}
+
+.tts-container textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.tts-ref-options {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem !important;
+    font-weight: 400 !important;
+    color: var(--text-secondary) !important;
+    cursor: pointer;
+    background: var(--bg-secondary);
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    transition: all var(--transition);
+}
+
+.radio-label:has(input:checked) {
+    border-color: var(--accent);
+    color: var(--accent-light) !important;
+    background: var(--accent-glow);
+}
+
+.radio-label input {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.drop-zone-sm {
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--bg-secondary);
+    transition: all var(--transition);
+}
+
+.drop-zone-sm:hover,
+.drop-zone-sm.dragover {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+}
+
+.drop-zone-sm p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.drop-zone-sm .accent {
+    color: var(--accent-light);
+    font-weight: 500;
+}
+
+.tts-result {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px dashed var(--border);
+}
+
+.tts-player {
+    margin-bottom: 16px;
+    border-radius: 30px;
+    overflow: hidden;
+}
+
+.tts-player audio {
+    width: 100%;
+    height: 44px;
+    outline: none;
+}
+
+.tts-progress {
+    background: linear-gradient(90deg, #ec4899, var(--accent));
 }
 
 /* ===== Toast ===== */
@@ -624,23 +790,23 @@ body {
     .app {
         padding: 0 16px;
     }
-    
+
     .header {
         padding: 16px 0 24px;
     }
-    
+
     .drop-zone {
         padding: 36px 16px;
     }
-    
+
     .upload-name {
         max-width: 200px;
     }
-    
+
     .result-actions {
         flex-direction: column;
     }
-    
+
     .result-actions .btn-sm {
         width: 100%;
         text-align: center;
